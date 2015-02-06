@@ -13,9 +13,9 @@ describe('HTML Job', function() {
   var globalConfig = {
     cdn: 'http://my.site.com/'
   };
-  
+
   describe('entry event', function() {
-    
+
     it('should emit every time we found a replacable tag', function(done) {
       var job = new HTMLJob(globalConfig),
           callback = sinon.spy();
@@ -25,7 +25,7 @@ describe('HTML Job', function() {
         done();
       }, 50);
     });
-    
+
     it('should contain original and replaced url', function() {
       var job = new HTMLJob(globalConfig);
       job.start(Snippets.image1).on('entry', function(data) {
@@ -33,23 +33,43 @@ describe('HTML Job', function() {
         expect(data.after).to.equal(url.resolve(globalConfig.cdn, "pic.png"));
       });
     });
-    
+
   });
-  
+
   describe('end event', function() {
     it('should contain the result string', function(done) {
       var job = new HTMLJob(globalConfig);
-    
+
       job.start(Snippets.image1).on('end', function(result) {
         expect(result).to.be.ok;
         var $ = cheerio.load(result);
         expect($('img').attr('src')).to.equal(url.resolve(globalConfig.cdn, 'pic.png'));
         done();
       });
-      
+
     });
+
+	it('should ignore mail chimp fields (without flatten)', function(done) {
+	  var job = new HTMLJob({ cdn: '', flatten: false });
+	  job.start(Snippets.mailChimp).on('end', function(result) {
+		  expect(result).to.be.ok;
+		  var $ = cheerio.load(result);
+		  expect($('img').attr('src')).to.equal('*|IMAGE|*');
+		  done();
+	  });
+	});
+
+	it('should ignore mail chimp fields (with flatten)', function(done) {
+	  var job = new HTMLJob({ cdn: '', flatten: true });
+	  job.start(Snippets.mailChimp).on('end', function(result) {
+		  expect(result).to.be.ok;
+		  var $ = cheerio.load(result);
+		  expect($('img').attr('src')).to.equal('*|IMAGE|*');
+		  done();
+	  });
+	});
   });
-  
+
   describe('ignore event', function() {
     it('should contain ignored url and reason', function(done) {
       var job = new HTMLJob(_.extend(globalConfig, { ignorePath: /\.(gif)$/ })),
@@ -65,9 +85,9 @@ describe('HTML Job', function() {
         done();
       }, 40);
     });
-    
+
     //TODO: test other cases to ignore
   });
-  
-  
+
+
 });
